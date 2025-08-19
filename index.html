@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Inventory System</title>
+<style>
+  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f7fc; color:#333; }
+  header { background:#34495e; color:white; padding:15px 20px; font-size:20px; font-weight:bold; }
+  nav { margin-top:15px; display:flex; gap:10px; flex-wrap:wrap; }
+  nav button { flex:1; min-width:120px; padding:10px; font-size:16px; cursor:pointer; border:none; background:#ecf0f1; border-radius:4px; transition:0.3s; }
+  nav button.active, nav button:hover { background:#3498db; color:white; }
+  section { margin-top:20px; background:white; padding:20px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.1); }
+  label { display:block; margin-top:12px; font-weight:600; }
+  input, select { width:100%; padding:8px; margin-top:5px; box-sizing:border-box; border-radius:4px; border:1px solid #bbb; }
+  button.primary { margin-top:16px; padding:12px 18px; background:#2980b9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; }
+  button.primary:hover { background:#1c5980; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { border:1px solid #ddd; padding:8px 10px; text-align:center; }
+  th { background:#3498db; color:white; }
+  .edit-buttons button { margin:0 3px; padding:4px 8px; font-size:12px; }
+  .no-data { text-align:center; padding:20px; color:#666; font-style:italic; }
+  #login-section { display:flex; height:100vh; justify-content:center; align-items:center; background:#2c3e50; }
+  #login-box { background:white; padding:30px; border-radius:8px; width:300px; box-shadow:0 2px 6px rgba(0,0,0,0.3); }
+  #login-box h2 { margin-top:0; text-align:center; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-section">
+  <div id="login-box">
+    <h2>Login</h2>
+    <label>Username</label>
+    <input type="text" id="login-username" placeholder="Username">
+    <label>Password</label>
+    <input type="password" id="login-password" placeholder="Password">
+    <button class="primary" onclick="login()">Login</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+<header>PLATINUM SKIES AVIATION Inventory</header>
+<nav>
+  <button id="menu-addstock" class="active" onclick="showSection('addstock')">Add Stock</button>
+  <button id="menu-withdrawal" onclick="showSection('withdrawal')">Withdrawal Form</button>
+  <button id="menu-stock" onclick="showSection('stock')">Current Stock</button>
+  <button id="menu-records" onclick="showSection('records')">Withdrawal Records</button>
+  <button id="menu-history" onclick="showSection('history')">History</button>
+</nav>
+
+<!-- ADD STOCK -->
+<section id="section-addstock">
+  <h2>Add Stock</h2>
+  <label>Category</label>
+  <select id="add-category"></select>
+  <label>Item Name</label>
+  <input type="text" id="add-item">
+  <label>Part Number</label>
+  <input type="text" id="add-partnumber">
+  <label>Serial Number</label>
+  <input type="text" id="add-serial">
+  <label>Quantity</label>
+  <input type="number" id="add-quantity" min="1">
+  <label>Storage Location</label>
+  <input type="text" id="add-location">
+  <button class="primary" onclick="addStock()">Add Stock</button>
+</section>
+
+<!-- WITHDRAWAL FORM -->
+<section id="section-withdrawal" style="display:none;">
+  <h2>Withdrawal Form</h2>
+  <label>Work Order</label>
+  <input type="text" id="withdraw-workorder">
+  <label>Aircraft Registry</label>
+  <select id="withdraw-aircraft">
+    <option value="">-- Select Registry --</option>
+    <option>RPC9258</option><option>RPC7328</option><option>BATTSHOP</option><option>TIRESHOP</option>
+  </select>
+  <label>Item Name</label>
+  <input type="text" id="withdraw-item" readonly>
+  <label>Part Number</label>
+  <input type="text" id="withdraw-partnumber" readonly>
+  <label>Serial Number</label>
+  <input type="text" id="withdraw-serial" readonly>
+  <label>Quantity</label>
+  <input type="number" id="withdraw-quantity" min="1">
+  <label>Withdrawn By</label>
+  <input type="text" id="withdraw-person">
+  <label>Date</label>
+  <input type="date" id="withdraw-date">
+  <button class="primary" onclick="withdrawItem()">Withdraw</button>
+</section>
+
+<!-- CURRENT STOCK -->
+<section id="section-stock" style="display:none;">
+  <h2>Current Stock</h2>
+  <table>
+    <thead>
+      <tr><th>Category</th><th>Item</th><th>Part Number</th><th>Serial Number</th><th>Qty Withdrawn</th><th>Quantity</th><th>Location</th><th>Actions</th></tr>
+    </thead>
+    <tbody id="stock-body"></tbody>
+  </table>
+  <div id="stock-nodata" class="no-data">No stock found.</div>
+</section>
+
+<!-- WITHDRAWAL RECORDS -->
+<section id="section-records" style="display:none;">
+  <h2>Withdrawal Records</h2>
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Work Order</th><th>Aircraft</th><th>Category</th><th>Item</th><th>Part Number</th><th>Serial Number</th><th>Qty</th><th>Person</th><th>Actions</th></tr>
+    </thead>
+    <tbody id="records-body"></tbody>
+  </table>
+  <div id="records-nodata" class="no-data">No records found.</div>
+</section>
+
+<!-- HISTORY -->
+<section id="section-history" style="display:none;">
+  <h2>History</h2>
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Action</th><th>Category</th><th>Item</th><th>Part Number</th><th>Serial</th><th>Qty</th><th>Location</th><th>Person</th></tr>
+    </thead>
+    <tbody id="history-body"></tbody>
+  </table>
+  <div id="history-nodata" class="no-data">No history.</div>
+</section>
+</div>
+
+<script>
+  const categories=["O-Ring","Lights","Filter","Sealant","Screw","Grease","Others"];
+  let stock={}, withdrawals=[], history=[];
+
+  // LOGIN
+  function login(){
+    const u=document.getElementById("login-username").value.trim();
+    const p=document.getElementById("login-password").value.trim();
+    if(u==="admin" && p==="1234"){document.getElementById("login-section").style.display="none";document.getElementById("app").style.display="block";}
+    else alert("Invalid login!");
+  }
+
+  function showSection(id){["addstock","withdrawal","stock","records","history"].forEach(s=>{document.getElementById("section-"+s).style.display=(s===id?"block":"none");document.getElementById("menu-"+s).classList.toggle("active",s===id);});}
+  function escapeHtml(t){return t?t.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):"";}
+  
+  function populateCategorySelects(){
+    const sel=document.getElementById("add-category");sel.innerHTML="";
+    categories.forEach(c=>{let o=document.createElement("option");o.value=c;o.textContent=c;sel.appendChild(o);});
+  }
+
+  function addStock(){
+    const cat=document.getElementById("add-category").value, item=document.getElementById("add-item").value.trim(),
+          part=document.getElementById("add-partnumber").value.trim(), serial=document.getElementById("add-serial").value.trim(),
+          qty=parseInt(document.getElementById("add-quantity").value,10), loc=document.getElementById("add-location").value.trim();
+    if(!cat||!item||!part||!qty||!loc){alert("Fill all required.");return;}
+    if(!stock[cat]) stock[cat]=[];
+    stock[cat].push({item,part,serial,qty,withdrawn:0,location:loc});
+    history.push({date:today(),action:"Added",cat,item,part,serial,qty,location:loc,person:"-"});
+    saveData();displayStock();displayHistory();alert("Stock added!");
+  }
+
+  function displayStock(){
+    const tbody=document.getElementById("stock-body");tbody.innerHTML="";let count=0;
+    Object.entries(stock).forEach(([cat,items])=>{
+      items.forEach((it,idx)=>{
+        let tr=document.createElement("tr");
+        tr.innerHTML=`<td>${cat}</td><td>${it.item}</td><td>${it.part}</td><td>${it.serial}</td>
+        <td>${it.withdrawn}</td><td>${it.qty}</td><td>${it.location}</td>
+        <td><button onclick="startEditStock('${cat}',${idx},this)">Edit</button>
+            <button onclick="initiateWithdrawal('${cat}',${idx})">Withdraw</button></td>`;
+        tbody.appendChild(tr);count++;
+      });
+    });
+    document.getElementById("stock-nodata").style.display=count?"none":"block";
+  }
+
+  function initiateWithdrawal(cat,idx){
+    showSection("withdrawal");
+    const it=stock[cat][idx];
+    document.getElementById("withdraw-item").value=it.item;
+    document.getElementById("withdraw-partnumber").value=it.part;
+    document.getElementById("withdraw-serial").value=it.serial;
+    document.getElementById("withdraw-date").value=today();
+  }
+
+  function withdrawItem(){
+    const work=document.getElementById("withdraw-workorder").value.trim(),
+          air=document.getElementById("withdraw-aircraft").value.trim(),
+          item=document.getElementById("withdraw-item").value.trim(),
+          part=document.getElementById("withdraw-partnumber").value.trim(),
+          serial=document.getElementById("withdraw-serial").value.trim(),
+          qty=parseInt(document.getElementById("withdraw-quantity").value,10),
+          person=document.getElementById("withdraw-person").value.trim(),
+          date=document.getElementById("withdraw-date").value||today();
+    if(!work||!air||!item||!part||!qty||!person){alert("Fill all withdrawal fields.");return;}
+    let found=null,fcat=null;
+    for(const [cat,arr] of Object.entries(stock)){let i=arr.find(x=>x.item===item&&x.part===part&&x.serial===serial);if(i){found=i;fcat=cat;break;}}
+    if(!found){alert("Item not found.");return;}
+    if(found.qty<qty){alert("Not enough stock.");return;}
+    found.qty-=qty;found.withdrawn+=qty;
+    withdrawals.push({date,work,air,cat:fcat,item,part,serial,qty,person});
+    history.push({date,action:"Withdrawn",cat:fcat,item,part,serial,qty,location:"-",person});
+    saveData();displayStock();displayRecords();displayHistory();alert("Withdrawal success!");
+  }
+
+  function displayRecords(){
+    const tbody=document.getElementById("records-body");tbody.innerHTML="";let c=0;
+    withdrawals.forEach((r,i)=>{let tr=document.createElement("tr");
+      tr.innerHTML=`<td>${r.date}</td><td>${r.work}</td><td>${r.air}</td><td>${r.cat}</td>
+      <td>${r.item}</td><td>${r.part}</td><td>${r.serial}</td><td>${r.qty}</td><td>${r.person}</td>
+      <td><button onclick="startEditRecord(${i},this)">Edit</button></td>`;tbody.appendChild(tr);c++;});
+    document.getElementById("records-nodata").style.display=c?"none":"block";
+  }
+
+  function displayHistory(){
+    const tbody=document.getElementById("history-body");tbody.innerHTML="";
+    history.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    history.forEach(h=>{let tr=document.createElement("tr");
+      tr.innerHTML=`<td>${h.date}</td><td>${h.action}</td><td>${h.cat}</td><td>${h.item}</td>
+      <td>${h.part}</td><td>${h.serial}</td><td>${h.qty}</td><td>${h.location}</td><td>${h.person}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("history-nodata").style.display=history.length?"none":"block";
+  }
+
+  function startEditStock(cat,idx,btn){
+    const it=stock[cat][idx], tr=btn.closest("tr");
+    if(btn.textContent==="Edit"){
+      tr.children[1].innerHTML=`<input value="${it.item}">`;
+      tr.children[2].innerHTML=`<input value="${it.part}">`;
+      tr.children[3].innerHTML=`<input value="${it.serial}">`;
+      tr.children[5].innerHTML=`<input type='number' value="${it.qty}">`;
+      tr.children[6].innerHTML=`<input value="${it.location}">`;
+      btn.textContent="Save";
+      let c=document.createElement("button");c.textContent="Cancel";c.onclick=()=>displayStock();btn.parentElement.appendChild(c);
+    }else{
+      it.item=tr.children[1].querySelector("input").value.trim();
+      it.part=tr.children[2].querySelector("input").value.trim();
+      it.serial=tr.children[3].querySelector("input").value.trim();
+      it.qty=parseInt(tr.children[5].querySelector("input").value,10);
+      it.location=tr.children[6].querySelector("input").value.trim();
+      saveData();displayStock();
+    }
+  }
+
+  function startEditRecord(i,btn){
+    const r=withdrawals[i], tr=btn.closest("tr");
+    if(btn.textContent==="Edit"){
+      tr.children[0].innerHTML=`<input type='date' value="${r.date}">`;
+      tr.children[7].innerHTML=`<input type='number' value="${r.qty}">`;
+      tr.children[8].innerHTML=`<input value="${r.person}">`;
+      btn.textContent="Save";
+      let c=document.createElement("button");c.textContent="Cancel";c.onclick=()=>displayRecords();btn.parentElement.appendChild(c);
+    }else{
+      r.date=tr.children[0].querySelector("input").value;
+      r.qty=parseInt(tr.children[7].querySelector("input").value,10);
+      r.person=tr.children[8].querySelector("input").value.trim();
+      saveData();displayRecords();
+    }
+  }
+
+  function today(){return new Date().toISOString().split("T")[0];}
+  function saveData(){localStorage.setItem("inv_stock",JSON.stringify(stock));localStorage.setItem("inv_withdrawals",JSON.stringify(withdrawals));localStorage.setItem("inv_history",JSON.stringify(history));}
+  function loadData(){stock=JSON.parse(localStorage.getItem("inv_stock")||"{}");withdrawals=JSON.parse(localStorage.getItem("inv_withdrawals")||"[]");history=JSON.parse(localStorage.getItem("inv_history")||"[]");}
+
+  window.onload=()=>{populateCategorySelects();loadData();displayStock();displayRecords();displayHistory();document.getElementById("withdraw-date").value=today();}
+</script>
+</body>
+</html>
